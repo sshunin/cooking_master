@@ -5,6 +5,7 @@ abstract class IngredientLocalDataSource {
   Future<void> saveIngredient(IngredientModel ingredient);
   Future<List<IngredientModel>> getIngredients({int offset, int limit});
   Future<void> updateIngredient(IngredientModel ingredient);
+  Future<void> deleteIngredient(int id);
 }
 
 class IngredientLocalDataSourceImpl implements IngredientLocalDataSource {
@@ -31,5 +32,10 @@ class IngredientLocalDataSourceImpl implements IngredientLocalDataSource {
       where: 'id = ?',
       whereArgs: [ingredient.id],
     );
+  }
+
+  @override
+  Future<void> deleteIngredient(int id) async {
+    await storage.delete('ingredients', where: 'id = ?', whereArgs: [id]);
   }
 }

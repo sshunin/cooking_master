@@ -22,4 +22,9 @@ class IngredientRepositoryImpl implements IngredientRepository {
   Future<void> updateIngredient(Ingredient ingredient) async {
     await dataSource.updateIngredient(IngredientModel.fromEntity(ingredient));
   }
+
+  @override
+  Future<void> deleteIngredient(int id) async {
+    await dataSource.deleteIngredient(id);
+  }
 }

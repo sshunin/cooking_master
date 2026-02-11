@@ -3,6 +3,7 @@ import 'package:cooking_master/core/di/service_locator.dart';
 import 'package:cooking_master/core/i18n/app_localizations.dart';
 import 'package:cooking_master/domain/entities/ingredient.dart';
 import 'package:cooking_master/domain/usecases/get_ingredients_usecase.dart';
+import 'package:cooking_master/domain/usecases/delete_ingredient_usecase.dart';
 import 'package:cooking_master/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -129,6 +130,64 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                       });
                       _loadIngredients();
                     },
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        final loc = AppLocalizations.of(context);
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(loc.translate('delete')),
+                            content: Text(loc.translate('confirm_delete')),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(loc.translate('cancel'))),
+                              TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(loc.translate('delete'))),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed != true) return;
+
+                        // Ensure id exists
+                        if (ingredient.id == null) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(loc.translate('error')), backgroundColor: Colors.red),
+                            );
+                          }
+                          return;
+                        }
+
+                        try {
+                          // Delete photo file if present
+                          if (ingredient.photoPath != null) {
+                            final f = File(ingredient.photoPath!);
+                            if (await f.exists()) {
+                              await f.delete();
+                            }
+                          }
+
+                          // Delete from storage via use case
+                          await ServiceLocator.instance.get<DeleteIngredientUseCase>().call(ingredient.id!);
+
+                          // Remove from local list
+                          if (mounted) {
+                            setState(() {
+                              _ingredients.removeAt(index);
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(loc.translate('deleted'))),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(loc.translate('error')), backgroundColor: Colors.red),
+                            );
+                          }
+                        }
+                      },
+                    ),
                   );
                 },
               ),

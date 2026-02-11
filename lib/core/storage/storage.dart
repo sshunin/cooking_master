@@ -29,6 +29,8 @@ abstract class Storage {
 
   /// Update records in a table
   Future<int> update(String table, Map<String, dynamic> values, {String? where, List<Object?>? whereArgs});
+  /// Delete records from a table
+  Future<int> delete(String table, {String? where, List<Object?>? whereArgs});
 }
 
 /// In-memory implementation of Storage for development/testing
@@ -79,6 +81,11 @@ class LocalStorageImpl implements Storage {
   @override
   Future<int> update(String table, Map<String, dynamic> values, {String? where, List<Object?>? whereArgs}) {
     // Not suitable for this storage type
+    throw UnimplementedError('Table operations not supported by LocalStorageImpl');
+  }
+
+  @override
+  Future<int> delete(String table, {String? where, List<Object?>? whereArgs}) {
     throw UnimplementedError('Table operations not supported by LocalStorageImpl');
   }
 }
@@ -135,6 +142,10 @@ class CloudStorageImpl implements Storage {
     // TODO: Implement cloud storage
     throw UnimplementedError('Cloud storage not yet implemented');
   }
+  @override
+  Future<int> delete(String table, {String? where, List<Object?>? whereArgs}) {
+    throw UnimplementedError('Cloud storage not yet implemented');
+  }
 }
 
 /// Persistent implementation using SharedPreferences
@@ -188,6 +199,11 @@ class SharedPreferencesStorageImpl implements Storage {
   @override
   Future<int> update(String table, Map<String, dynamic> values, {String? where, List<Object?>? whereArgs}) {
     // Not suitable for this storage type
+    throw UnimplementedError('Table operations not supported by SharedPreferencesStorageImpl');
+  }
+
+  @override
+  Future<int> delete(String table, {String? where, List<Object?>? whereArgs}) {
     throw UnimplementedError('Table operations not supported by SharedPreferencesStorageImpl');
   }
 }

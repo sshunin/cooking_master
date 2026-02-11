@@ -10,6 +10,7 @@ import 'package:cooking_master/domain/usecases/auth_usecases.dart';
 import 'package:cooking_master/domain/usecases/get_ingredients_usecase.dart';
 import 'package:cooking_master/domain/usecases/save_ingredient_usecase.dart';
 import 'package:cooking_master/domain/usecases/update_ingredient_usecase.dart';
+import 'package:cooking_master/domain/usecases/delete_ingredient_usecase.dart';
 
 /// Service Locator for dependency injection
 class ServiceLocator {
@@ -94,6 +95,9 @@ class ServiceLocator {
 
     _register<UpdateIngredientUseCase>(
       UpdateIngredientUseCase(_get<IngredientRepository>()),
+    );
+    _register<DeleteIngredientUseCase>(
+      DeleteIngredientUseCase(_get<IngredientRepository>()),
     );
   }
 

@@ -94,4 +94,9 @@ class SqliteStorageImpl implements Storage {
   Future<int> update(String table, Map<String, dynamic> values, {String? where, List<Object?>? whereArgs}) async {
     return await _db.update(table, values, where: where, whereArgs: whereArgs);
   }
+
+  @override
+  Future<int> delete(String table, {String? where, List<Object?>? whereArgs}) async {
+    return await _db.delete(table, where: where, whereArgs: whereArgs);
+  }
 }
