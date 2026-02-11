@@ -32,6 +32,68 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
     super.dispose();
   }
 
+  Future<void> _askAIForCalories() async {
+    final loc = AppLocalizations.of(context);
+    // show waiting dialog
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        content: Row(
+          children: [
+            const SizedBox(width: 24, height: 24, child: CircularProgressIndicator()),
+            const SizedBox(width: 16),
+            Expanded(child: Text(loc.translate('ai_suggesting'))),
+          ],
+        ),
+      ),
+    );
+
+    // simulate AI processing
+    await Future.delayed(const Duration(seconds: 1));
+
+    // simple heuristic suggestions based on ingredient name
+    final name = _nameController.text.toLowerCase();
+    int suggestion;
+    if (name.contains('egg')) {
+      suggestion = 78;
+    } else if (name.contains('apple')) {
+      suggestion = 95;
+    } else if (name.contains('banana')) {
+      suggestion = 105;
+    } else if (name.contains('milk')) {
+      suggestion = 42;
+    } else if (name.contains('sugar')) {
+      suggestion = 387;
+    } else if (name.contains('flour')) {
+      suggestion = 364;
+    } else {
+      suggestion = (name.length * 15) + 20;
+      if (suggestion < 10) suggestion = 10;
+      if (suggestion > 2000) suggestion = 2000;
+    }
+
+    // close waiting
+    if (mounted) Navigator.of(context).pop();
+
+    // show suggestion and ask to accept
+    final accept = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(loc.translate('ask_ai')),
+        content: Text(loc.translate('ai_suggestion', {'value': suggestion.toString()})),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(loc.translate('cancel'))),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(loc.translate('accept'))),
+        ],
+      ),
+    );
+
+    if (accept == true) {
+      _caloriesController.text = suggestion.toString();
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -131,6 +193,15 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30.0),
                     borderSide: BorderSide.none,
+                  ),
+                  suffixIcon: TextButton.icon(
+                    onPressed: _askAIForCalories,
+                    icon: const Icon(Icons.smart_toy, size: 18),
+                    label: Text(loc.translate('ask_ai')),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      minimumSize: const Size(0, 36),
+                    ),
                   ),
                 ),
                 keyboardType: TextInputType.number,
