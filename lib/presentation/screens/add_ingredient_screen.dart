@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:cooking_master/core/ai/openai_client.dart';
 
 class AddIngredientScreen extends StatefulWidget {
   const AddIngredientScreen({super.key});
@@ -34,63 +35,91 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
 
   Future<void> _askAIForCalories() async {
     final loc = AppLocalizations.of(context);
-    // show waiting dialog
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        content: Row(
-          children: [
-            const SizedBox(width: 24, height: 24, child: CircularProgressIndicator()),
-            const SizedBox(width: 16),
-            Expanded(child: Text(loc.translate('ai_suggesting'))),
-          ],
-        ),
-      ),
-    );
 
-    // simulate AI processing
-    await Future.delayed(const Duration(seconds: 1));
-
-    // simple heuristic suggestions based on ingredient name
-    final name = _nameController.text.toLowerCase();
-    int suggestion;
-    if (name.contains('egg')) {
-      suggestion = 78;
-    } else if (name.contains('apple')) {
-      suggestion = 95;
-    } else if (name.contains('banana')) {
-      suggestion = 105;
-    } else if (name.contains('milk')) {
-      suggestion = 42;
-    } else if (name.contains('sugar')) {
-      suggestion = 387;
-    } else if (name.contains('flour')) {
-      suggestion = 364;
-    } else {
-      suggestion = (name.length * 15) + 20;
-      if (suggestion < 10) suggestion = 10;
-      if (suggestion > 2000) suggestion = 2000;
+    // Ensure ingredient name exists
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.translate('please_fill_all'))),
+        );
+      }
+      return;
     }
 
-    // close waiting
-    if (mounted) Navigator.of(context).pop();
+    // Check for API key stored in storage; OpenAIClient will throw if missing.
+    // Prompt user to enter API key if absent
+    try {
+      // show waiting
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          content: Row(
+            children: [
+              const SizedBox(width: 24, height: 24, child: CircularProgressIndicator()),
+              const SizedBox(width: 16),
+              Expanded(child: Text(loc.translate('ai_suggesting'))),
+            ],
+          ),
+        ),
+      );
 
-    // show suggestion and ask to accept
-    final accept = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(loc.translate('ask_ai')),
-        content: Text(loc.translate('ai_suggestion', {'value': suggestion.toString()})),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(loc.translate('cancel'))),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(loc.translate('accept'))),
-        ],
-      ),
-    );
+      final client = OpenAIClient.instance();
+      final suggestion = await client.suggestCalories(name);
 
-    if (accept == true) {
-      _caloriesController.text = suggestion.toString();
+      if (mounted) Navigator.of(context).pop();
+
+      if (suggestion == null) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('error'))));
+        return;
+      }
+
+      final accept = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(loc.translate('ask_ai')),
+          content: Text(loc.translate('ai_suggestion', {'value': suggestion.toString()})),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(loc.translate('cancel'))),
+            TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(loc.translate('accept'))),
+          ],
+        ),
+      );
+
+      if (accept == true) {
+        _caloriesController.text = suggestion.toString();
+      }
+    } catch (e) {
+      // If missing API key, prompt user to enter it
+      if (e.toString().contains('NO_API_KEY')) {
+        if (!mounted) return;
+        final entered = await showDialog<String?>(
+          context: context,
+          builder: (ctx) {
+            final keyCtrl = TextEditingController();
+            return AlertDialog(
+              title: Text(loc.translate('enter_api_key')),
+              content: TextField(controller: keyCtrl, decoration: InputDecoration(hintText: 'sk-...')),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(ctx).pop(null), child: Text(loc.translate('cancel'))),
+                TextButton(onPressed: () => Navigator.of(ctx).pop(keyCtrl.text.trim()), child: Text(loc.translate('save'))),
+              ],
+            );
+          },
+        );
+
+        if (entered != null && entered.isNotEmpty) {
+          await OpenAIClient.instance().setApiKey(entered);
+          // Retry once
+          await _askAIForCalories();
+        }
+      } else {
+        if (mounted) {
+          if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('error')), backgroundColor: Colors.red));
+        }
+      }
     }
   }
 
