@@ -1,0 +1,165 @@
+import 'dart:io';
+import 'package:cooking_master/core/di/service_locator.dart';
+import 'package:cooking_master/core/i18n/app_localizations.dart';
+import 'package:cooking_master/domain/entities/ingredient.dart';
+import 'package:cooking_master/domain/usecases/save_ingredient_usecase.dart';
+import 'package:cooking_master/domain/usecases/update_ingredient_usecase.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+class AddIngredientScreen extends StatefulWidget {
+  const AddIngredientScreen({super.key});
+
+  @override
+  State<AddIngredientScreen> createState() => _AddIngredientScreenState();
+}
+
+class _AddIngredientScreenState extends State<AddIngredientScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _caloriesController = TextEditingController();
+  String? _imagePath;
+  bool _initialized = false;
+  bool _isEditing = false;
+  int? _editingId;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _caloriesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Ingredient) {
+        _isEditing = true;
+        _editingId = args.id;
+        _nameController.text = args.name;
+        _caloriesController.text = args.calories.toString();
+        _imagePath = args.photoPath;
+      }
+      _initialized = true;
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(pickedFile.path)}';
+      final savedImage = await File(pickedFile.path).copy('${appDir.path}/$fileName');
+      setState(() {
+        _imagePath = savedImage.path;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isEditing ? loc.translate('edit_ingredient') : loc.translate('add_ingredient')),
+        actions: [
+          TextButton(
+            child: Text(
+              _isEditing ? loc.translate('update') : loc.translate('save'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                final calories = int.tryParse(_caloriesController.text);
+                // The validator should prevent this from being null, but this is a safe fallback.
+                if (calories == null) return;
+
+                final ingredient = Ingredient(
+                    id: _editingId, name: _nameController.text, calories: calories, photoPath: _imagePath);
+                
+                if (_isEditing) {
+                  await ServiceLocator.instance.get<UpdateIngredientUseCase>().call(ingredient);
+                } else {
+                  await ServiceLocator.instance.get<SaveIngredientUseCase>().call(ingredient);
+                }
+                if (mounted) Navigator.of(context).pop();
+              }
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: loc.translate('ingredient_name'),
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return loc.translate('please_fill_all');
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _caloriesController,
+                decoration: InputDecoration(
+                  labelText: loc.translate('calories'),
+                  border: const OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return loc.translate('please_fill_all');
+                  }
+                  if (int.tryParse(value) == null) {
+                    return loc.translate('invalid_number');
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: _imagePath != null
+                        ? Image.file(File(_imagePath!), fit: BoxFit.cover)
+                        : const Icon(Icons.image, size: 40, color: Colors.grey),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.upload),
+                    label: Text(loc.translate('upload_photo')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

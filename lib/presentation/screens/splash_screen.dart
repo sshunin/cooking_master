@@ -1,10 +1,11 @@
+import 'package:cooking_master/core/i18n/app_localizations.dart';
+import 'package:cooking_master/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cooking_master/presentation/providers/auth_provider.dart';
 
 /// Splash screen that checks authentication status
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -34,8 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -43,12 +43,11 @@ class _SplashScreenState extends State<SplashScreen> {
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
             Text(
-              'Cooking Master',
+              AppLocalizations.of(context).translate('cooking_master'),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ],
         ),
       ),
     );
-  }
 }

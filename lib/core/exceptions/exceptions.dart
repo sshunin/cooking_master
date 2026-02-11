@@ -1,8 +1,8 @@
 /// Custom exception for authentication-related errors.
 class AuthenticationException implements Exception {
-  final String message;
 
   AuthenticationException(this.message);
+  final String message;
 
   @override
   String toString() => 'AuthenticationException: $message';
@@ -10,9 +10,9 @@ class AuthenticationException implements Exception {
 
 /// Custom exception for storage-related errors.
 class StorageException implements Exception {
-  final String message;
 
   StorageException(this.message);
+  final String message;
 
   @override
   String toString() => 'StorageException: $message';
@@ -20,9 +20,9 @@ class StorageException implements Exception {
 
 /// Custom exception for general application errors.
 class AppException implements Exception {
-  final String message;
 
   AppException(this.message);
+  final String message;
 
   @override
   String toString() => 'AppException: $message';

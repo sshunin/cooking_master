@@ -1,10 +1,11 @@
+import 'package:cooking_master/core/i18n/app_localizations.dart';
+import 'package:cooking_master/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cooking_master/presentation/providers/auth_provider.dart';
 
 /// Login screen
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -30,64 +31,91 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(
+        title: Text(loc.translate('login')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.of(context).pushNamed('/preferences'),
+          ),
+        ],
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Consumer<AuthProvider>(
-          builder: (context, authProvider, _) {
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    enabled: !authProvider.isLoading,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(labelText: 'Password'),
-                    obscureText: true,
-                    enabled: !authProvider.isLoading,
-                  ),
-                  const SizedBox(height: 24),
-                  if (authProvider.errorMessage != null)
-                    Text(
-                      authProvider.errorMessage!,
-                      style: const TextStyle(color: Colors.red),
+          builder: (context, authProvider, _) => SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: loc.translate('email'),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
                     ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: authProvider.isLoading
-                          ? null
-                          : () => _handleLogin(context, authProvider),
-                      child: authProvider.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Login'),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextButton(
+                  enabled: !authProvider.isLoading,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: loc.translate('password'),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                  obscureText: true,
+                  enabled: !authProvider.isLoading,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
                     onPressed: authProvider.isLoading
-                        ? null
-                        : () =>
-                            Navigator.of(context).pushNamed('/register'),
-                    child: const Text('Don\'t have an account? Register'),
+                      ? null
+                      : () => _handleLogin(context, authProvider),
+                    child: authProvider.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(loc.translate('login_btn')),
                   ),
-                ],
-              ),
-            );
-          },
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: authProvider.isLoading
+                      ? null
+                      : () => Navigator.of(context).pushNamed('/register'),
+                    child: Text(loc.translate('dont_have_account')),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -97,6 +125,12 @@ class _LoginScreenState extends State<LoginScreen> {
     BuildContext context,
     AuthProvider authProvider,
   ) async {
+    // Validate input
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showErrorDialog(context, AppLocalizations.of(context).translate('please_enter_email_and_password'));
+      return;
+    }
+
     await authProvider.login(
       email: _emailController.text,
       password: _passwordController.text,
@@ -106,6 +140,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (authProvider.isAuthenticated) {
       Navigator.of(context).pushReplacementNamed('/home');
+    } else if (authProvider.errorMessage != null) {
+      _showErrorDialog(context, authProvider.errorMessage!);
     }
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text(AppLocalizations.of(context).translate('error')),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppLocalizations.of(context).translate('ok')),
+          ),
+        ],
+      ),
+    );
   }
 }

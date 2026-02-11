@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cooking_master/core/di/service_locator.dart';
 import 'package:cooking_master/core/exceptions/exceptions.dart';
 import 'package:cooking_master/domain/entities/user.dart';
 import 'package:cooking_master/domain/usecases/auth_usecases.dart';
+import 'package:flutter/material.dart';
 
 /// AuthProvider manages authentication state
 class AuthProvider extends ChangeNotifier {
@@ -25,9 +25,18 @@ class AuthProvider extends ChangeNotifier {
       
       final checkAuthUseCase = ServiceLocator.instance.get<CheckAuthUseCase>();
       _isAuthenticated = await checkAuthUseCase();
-      
+
       if (_isAuthenticated) {
-        // TODO: Fetch current user from storage
+        // Fetch current user from storage and set it
+        try {
+          final getUserUseCase = ServiceLocator.instance.get<GetCurrentUserUseCase>();
+          final user = await getUserUseCase();
+          _currentUser = user;
+        } catch (e) {
+          // If fetching the user fails, clear authentication flag
+          _isAuthenticated = false;
+          _setError('Failed to load current user: $e');
+        }
       }
     } on AuthenticationException catch (e) {
       _setError(e.message);

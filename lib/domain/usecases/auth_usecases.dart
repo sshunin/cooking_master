@@ -3,59 +3,49 @@ import 'package:cooking_master/domain/repositories/auth_repository.dart';
 
 /// Use case for user login
 class LoginUseCase {
-  final AuthRepository repository;
 
   LoginUseCase(this.repository);
+  final AuthRepository repository;
 
-  Future<User> call({required String email, required String password}) {
-    return repository.login(email: email, password: password);
-  }
+  Future<User> call({required String email, required String password}) => repository.login(email: email, password: password);
 }
 
 /// Use case for user registration
 class RegisterUseCase {
-  final AuthRepository repository;
 
   RegisterUseCase(this.repository);
+  final AuthRepository repository;
 
   Future<User> call({
     required String email,
     required String password,
     required String name,
-  }) {
-    return repository.register(email: email, password: password, name: name);
-  }
+  }) => repository.register(email: email, password: password, name: name);
 }
 
 /// Use case for user logout
 class LogoutUseCase {
-  final AuthRepository repository;
 
   LogoutUseCase(this.repository);
+  final AuthRepository repository;
 
-  Future<void> call() {
-    return repository.logout();
-  }
+  Future<void> call() => repository.logout();
 }
 
 /// Use case to check authentication status
 class CheckAuthUseCase {
-  final AuthRepository repository;
 
   CheckAuthUseCase(this.repository);
+  final AuthRepository repository;
 
-  Future<bool> call() {
-    return repository.isAuthenticated();
-  }
+  Future<bool> call() => repository.isAuthenticated();
 }
 
 /// Use case to get current user
 class GetCurrentUserUseCase {
-  final AuthRepository repository;
 
   GetCurrentUserUseCase(this.repository);
+  final AuthRepository repository;
 
-  Future<User?> call() {
-    return repository.getCurrentUser();
-  }
+  Future<User?> call() => repository.getCurrentUser();
 }

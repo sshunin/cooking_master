@@ -1,9 +1,5 @@
 /// User entity for business logic layer
 class User {
-  final String id;
-  final String email;
-  final String name;
-  final DateTime createdAt;
 
   User({
     required this.id,
@@ -11,6 +7,10 @@ class User {
     required this.name,
     required this.createdAt,
   });
+  final String id;
+  final String email;
+  final String name;
+  final DateTime createdAt;
 
   @override
   String toString() =>

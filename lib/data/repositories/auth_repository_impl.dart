@@ -6,9 +6,9 @@ import 'package:cooking_master/domain/repositories/auth_repository.dart';
 
 /// Implementation of AuthRepository
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthLocalDataSource localDataSource;
 
   AuthRepositoryImpl(this.localDataSource);
+  final AuthLocalDataSource localDataSource;
 
   @override
   Future<User> register({
@@ -17,6 +17,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String name,
   }) async {
     try {
+      // Check if user already exists by email
+      if (await localDataSource.userExistsByEmail(email)) {
+        throw AuthenticationException('User with this email already exists');
+      }
+
       // TODO: Implement actual registration with API
       // For now, create a local user
       final user = UserModel(
@@ -36,6 +41,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<User> login({required String email, required String password}) async {
     try {
+      // Check if user exists in database
+      if (!await localDataSource.userExistsByEmail(email)) {
+        throw AuthenticationException('User not found or credentials are wrong');
+      }
+
       // TODO: Implement actual login with API
       // For now, create a local user
       final user = UserModel(
@@ -62,12 +72,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<bool> isAuthenticated() async {
-    return localDataSource.isUserSaved();
-  }
+  Future<bool> isAuthenticated() async => localDataSource.isUserSaved();
 
   @override
-  Future<User?> getCurrentUser() async {
-    return localDataSource.getUser();
-  }
+  Future<User?> getCurrentUser() async => localDataSource.getUser();
 }

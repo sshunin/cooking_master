@@ -13,6 +13,12 @@ dependencies:
     sdk: flutter
   provider: ^6.0.0
   shared_preferences: ^2.2.0
+  flutter_localizations:
+    sdk: flutter
+  sqflite: ^2.2.8+4
+  path: ^1.8.4
+  path_provider: ^2.0.15
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
