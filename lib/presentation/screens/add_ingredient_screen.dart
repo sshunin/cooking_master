@@ -105,7 +105,13 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: loc.translate('ingredient_name'),
-                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -119,7 +125,13 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
                 controller: _caloriesController,
                 decoration: InputDecoration(
                   labelText: loc.translate('calories'),
-                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
