@@ -27,6 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
           title: Text(loc.translate('cooking_master')),
           actions: [
             IconButton(
+              icon: const Icon(Icons.shopping_cart),
+              onPressed: () => Navigator.of(context).pushNamed('/shopping_list'),
+            ),
+            IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () => Navigator.of(context).pushNamed('/preferences'),
             ),
@@ -37,26 +41,36 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body: Consumer<AuthProvider>(
-          builder: (context, authProvider, _) {
-            final user = authProvider.currentUser;
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/CM_Load_Image.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            Consumer<AuthProvider>(
+              builder: (context, authProvider, _) {
+                final user = authProvider.currentUser;
 
-            return Column(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                    child: _buildWelcomeCard(context, authProvider, loc),
-                  ),
-                ),
-                const Expanded(
-                  flex: 1,
-                  child: SizedBox(),
-                ),
-              ],
-            );
-          },
+                return Column(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                        child: _buildWelcomeCard(context, authProvider, loc),
+                      ),
+                    ),
+                    const Expanded(
+                      flex: 1,
+                      child: SizedBox(),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
@@ -94,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: cardColor,
+        color: cardColor.withOpacity(0.9),
         borderRadius: BorderRadius.circular(40),
         boxShadow: [
           BoxShadow(
@@ -110,6 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Image.asset('assets/images/CM_Logo.png', height: 100),
+              const SizedBox(height: 16),
               Text(
                 loc.translate('welcome', {'name': user?.name ?? 'User'}),
                 style: theme.textTheme.headlineMedium?.copyWith(
@@ -168,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await authProvider.logout();
     
     if (context.mounted) {
-      Navigator.of(context).pushReplacementNamed('/login');
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
 }

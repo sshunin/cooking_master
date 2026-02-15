@@ -215,11 +215,6 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
         title: Text(_isEditing ? loc.translate('edit_ingredient') : loc.translate('add_ingredient')),
         actions: [
               if (_isEditing) ...[
-                IconButton(
-                  tooltip: AppLocalizations.of(context).translate('ask_ai'),
-                  icon: const Icon(Icons.smart_toy),
-                  onPressed: _askAIForCalories,
-                ),
                 TextButton(
                   child: Text(
                     loc.translate('update'),

@@ -4,5 +4,10 @@ class Ingredient {
   final int calories;
   final String? photoPath;
 
-  Ingredient({this.id, required this.name, required this.calories, this.photoPath});
+  const Ingredient({
+    this.id,
+    required this.name,
+    required this.calories,
+    this.photoPath,
+  });
 }

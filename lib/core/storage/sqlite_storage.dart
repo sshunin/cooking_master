@@ -15,7 +15,7 @@ class SqliteStorageImpl implements Storage {
     final path = p.join(documentsDirectory.path, 'cooking_master.db');
     final db = await openDatabase(
       path,
-      version: 2,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT)',
@@ -23,11 +23,39 @@ class SqliteStorageImpl implements Storage {
         await db.execute(
           'CREATE TABLE IF NOT EXISTS ingredients (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, calories INTEGER, photo_path TEXT)',
         );
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS recipes (id TEXT PRIMARY KEY, user_id TEXT, name TEXT, description TEXT, photo_path TEXT, ingredients TEXT, steps TEXT)',
+        );
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS shopping_list (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, is_bought INTEGER)',
+        );
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           await db.execute(
             'CREATE TABLE IF NOT EXISTS ingredients (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, calories INTEGER, photo_path TEXT)',
+          );
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            'CREATE TABLE IF NOT EXISTS recipes (id TEXT PRIMARY KEY, user_id TEXT, name TEXT, ingredients TEXT, steps TEXT)',
+          );
+        }
+        if (oldVersion < 4) {
+          await db.execute('ALTER TABLE recipes ADD COLUMN description TEXT');
+          await db.execute('ALTER TABLE recipes ADD COLUMN photo_path TEXT');
+        }
+        if (oldVersion == 4) {
+          try {
+            await db.execute('ALTER TABLE recipes ADD COLUMN description TEXT');
+          } catch (_) {}
+          try {
+            await db.execute('ALTER TABLE recipes ADD COLUMN photo_path TEXT');
+          } catch (_) {}
+        }
+        if (oldVersion < 6) {
+          await db.execute(
+            'CREATE TABLE IF NOT EXISTS shopping_list (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, is_bought INTEGER)',
           );
         }
       },
@@ -86,8 +114,8 @@ class SqliteStorageImpl implements Storage {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy}) async {
-    return await _db.query(table, limit: limit, offset: offset, orderBy: orderBy);
+  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy, String? where, List<Object?>? whereArgs}) async {
+    return await _db.query(table, limit: limit, offset: offset, orderBy: orderBy, where: where, whereArgs: whereArgs);
   }
 
   @override

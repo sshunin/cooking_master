@@ -25,6 +25,8 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   bool _hasMore = true;
   int _offset = 0;
   final int _limit = 20;
+  String _sortCriteria = '';
+  bool _isAscending = true;
 
   @override
   void initState() {
@@ -91,6 +93,64 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     }
   }
 
+  void _applySort(String criteria) {
+    setState(() {
+      if (_sortCriteria == criteria) {
+        _isAscending = !_isAscending;
+      } else {
+        _sortCriteria = criteria;
+        _isAscending = true;
+      }
+
+      if (_sortCriteria == 'name') {
+        _ingredients.sort((a, b) {
+          final cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          return _isAscending ? cmp : -cmp;
+        });
+      } else if (_sortCriteria == 'calories') {
+        _ingredients.sort((a, b) {
+          final cmp = a.calories.compareTo(b.calories);
+          return _isAscending ? cmp : -cmp;
+        });
+      }
+    });
+  }
+
+  void _showSortOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.sort_by_alpha),
+              title: const Text('Name'),
+              trailing: _sortCriteria == 'name'
+                  ? Icon(_isAscending ? Icons.arrow_upward : Icons.arrow_downward)
+                  : null,
+              onTap: () {
+                _applySort('name');
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.local_fire_department),
+              title: const Text('Calories'),
+              trailing: _sortCriteria == 'calories'
+                  ? Icon(_isAscending ? Icons.arrow_upward : Icons.arrow_downward)
+                  : null,
+              onTap: () {
+                _applySort('calories');
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -115,9 +175,17 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
             ),
           ],
         ),
-        body: Column(
+        body: Stack(
           children: [
-            Padding(
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/CM_ingredients_list_background.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            Column(
+              children: [
+                Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
                 controller: _searchController,
@@ -139,6 +207,8 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                       : null,
                   hintText: loc.translate('search_ingredients') ,
                   border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.8),
                 ),
               ),
             ),
@@ -157,7 +227,9 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                         }
                         if (index >= _displayedIngredients.length) return const SizedBox.shrink();
                         final ingredient = _displayedIngredients[index];
-                        return ListTile(
+                        return Card(
+                          color: Colors.white.withOpacity(0.9),
+                          child: ListTile(
                     leading: ingredient.photoPath != null
                         ? CircleAvatar(backgroundImage: FileImage(File(ingredient.photoPath!)))
                         : const CircleAvatar(child: Icon(Icons.fastfood)),
@@ -231,26 +303,41 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                         }
                       },
                     ),
-                  );
+                  ),
+                );
                 },
               ),
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            await Navigator.of(context).pushNamed('/add_ingredient');
-            // Refresh list after adding
-            setState(() {
-              _ingredients.clear();
-              _offset = 0;
-              _hasMore = true;
-            });
-            _loadIngredients();
-          },
-          child: const Icon(Icons.add),
+      ],
+    ),
+        bottomNavigationBar: BottomAppBar(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              FloatingActionButton(
+                heroTag: 'sort',
+                onPressed: _showSortOptions,
+                child: const Icon(Icons.sort),
+              ),
+              FloatingActionButton(
+                heroTag: 'add',
+                onPressed: () async {
+                  await Navigator.of(context).pushNamed('/add_ingredient');
+                  // Refresh list after adding
+                  setState(() {
+                    _ingredients.clear();
+                    _offset = 0;
+                    _hasMore = true;
+                  });
+                  _loadIngredients();
+                },
+                child: const Icon(Icons.add),
+              ),
+            ],
+          ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       ),
     );
   }
@@ -260,7 +347,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     await authProvider.logout();
 
     if (context.mounted) {
-      Navigator.of(context).pushReplacementNamed('/login');
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
 }

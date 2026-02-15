@@ -1,8 +1,12 @@
 import 'package:cooking_master/core/di/service_locator.dart';
 import 'package:cooking_master/core/i18n/app_localizations.dart';
+import 'package:cooking_master/domain/usecases/auth_usecases.dart';
+import 'package:cooking_master/domain/usecases/shopping_list_usecases.dart';
 import 'package:cooking_master/presentation/providers/auth_provider.dart';
 import 'package:cooking_master/presentation/providers/locale_provider.dart';
+import 'package:cooking_master/presentation/providers/shopping_list_provider.dart';
 import 'package:cooking_master/presentation/screens/add_ingredient_screen.dart';
+import 'package:cooking_master/presentation/screens/add_recipe_screen.dart';
 import 'package:cooking_master/presentation/screens/home_screen.dart';
 import 'package:cooking_master/presentation/screens/ingredients_screen.dart';
 import 'package:cooking_master/presentation/screens/login_screen.dart';
@@ -10,6 +14,7 @@ import 'package:cooking_master/presentation/screens/preferences_screen.dart';
 import 'package:cooking_master/presentation/screens/receipts_screen.dart';
 import 'package:cooking_master/presentation/screens/recommendations_screen.dart';
 import 'package:cooking_master/presentation/screens/register_screen.dart';
+import 'package:cooking_master/presentation/screens/shopping_list_screen.dart';
 import 'package:cooking_master/presentation/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -29,10 +34,25 @@ class CookingMasterApp extends StatelessWidget {
   Widget build(BuildContext context) => MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AuthProvider(),
+          create: (_) => AuthProvider(
+            loginUseCase: ServiceLocator.instance.get<LoginUseCase>(),
+            registerUseCase: ServiceLocator.instance.get<RegisterUseCase>(),
+            logoutUseCase: ServiceLocator.instance.get<LogoutUseCase>(),
+            checkAuthUseCase: ServiceLocator.instance.get<CheckAuthUseCase>(),
+            getCurrentUserUseCase: ServiceLocator.instance.get<GetCurrentUserUseCase>(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => LocaleProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ShoppingListProvider(
+            ServiceLocator.instance.get<GetShoppingListUseCase>(),
+            ServiceLocator.instance.get<AddShoppingListItemUseCase>(),
+            ServiceLocator.instance.get<UpdateShoppingListItemUseCase>(),
+            ServiceLocator.instance.get<DeleteShoppingListItemUseCase>(),
+            ServiceLocator.instance.get<ClearShoppingListUseCase>(),
+          ),
         ),
       ],
       child: Consumer<LocaleProvider>(
@@ -70,6 +90,8 @@ class CookingMasterApp extends StatelessWidget {
             '/add_ingredient': (_) => const AddIngredientScreen(),
             '/recommendations': (_) => const RecommendationsScreen(),
             '/preferences': (_) => const PreferencesScreen(),
+            '/add_recipe': (_) => const AddRecipeScreen(),
+            '/shopping_list': (_) => const ShoppingListScreen(),
           },
         ),
       ),

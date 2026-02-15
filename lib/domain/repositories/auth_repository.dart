@@ -16,4 +16,7 @@ abstract class AuthRepository {
 
   /// Get current user
   Future<User?> getCurrentUser();
+
+  /// Update password
+  Future<void> updatePassword(String newPassword);
 }

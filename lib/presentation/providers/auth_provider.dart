@@ -1,128 +1,100 @@
-import 'package:cooking_master/core/di/service_locator.dart';
-import 'package:cooking_master/core/exceptions/exceptions.dart';
 import 'package:cooking_master/domain/entities/user.dart';
 import 'package:cooking_master/domain/usecases/auth_usecases.dart';
 import 'package:flutter/material.dart';
 
-/// AuthProvider manages authentication state
 class AuthProvider extends ChangeNotifier {
-  User? _currentUser;
+  AuthProvider({
+    required LoginUseCase loginUseCase,
+    required RegisterUseCase registerUseCase,
+    required LogoutUseCase logoutUseCase,
+    required CheckAuthUseCase checkAuthUseCase,
+    required GetCurrentUserUseCase getCurrentUserUseCase,
+  })  : _loginUseCase = loginUseCase,
+        _registerUseCase = registerUseCase,
+        _logoutUseCase = logoutUseCase,
+        _checkAuthUseCase = checkAuthUseCase,
+        _getCurrentUserUseCase = getCurrentUserUseCase;
+
+  final LoginUseCase _loginUseCase;
+  final RegisterUseCase _registerUseCase;
+  final LogoutUseCase _logoutUseCase;
+  final CheckAuthUseCase _checkAuthUseCase;
+  final GetCurrentUserUseCase _getCurrentUserUseCase;
+
+  User? _user;
+  User? get user => _user;
+  User? get currentUser => _user;
+  bool get isAuthenticated => _user != null;
+
   bool _isLoading = false;
-  String? _errorMessage;
-  bool _isAuthenticated = false;
-
-  // Getters
-  User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
-  bool get isAuthenticated => _isAuthenticated;
 
-  /// Check if user is authenticated on app startup
-  Future<void> checkAuthentication() async {
+  String? _error;
+  String? get error => _error;
+  String? get errorMessage => _error;
+
+  Future<void> checkAuthentication() => checkAuth();
+
+  Future<void> checkAuth() async {
+    _isLoading = true;
+    notifyListeners();
     try {
-      _setLoading(true);
-      _clearError();
-      
-      final checkAuthUseCase = ServiceLocator.instance.get<CheckAuthUseCase>();
-      _isAuthenticated = await checkAuthUseCase();
-
-      if (_isAuthenticated) {
-        // Fetch current user from storage and set it
-        try {
-          final getUserUseCase = ServiceLocator.instance.get<GetCurrentUserUseCase>();
-          final user = await getUserUseCase();
-          _currentUser = user;
-        } catch (e) {
-          // If fetching the user fails, clear authentication flag
-          _isAuthenticated = false;
-          _setError('Failed to load current user: $e');
-        }
+      final isAuthenticated = await _checkAuthUseCase();
+      if (isAuthenticated) {
+        _user = await _getCurrentUserUseCase();
+      } else {
+        _user = null;
       }
-    } on AuthenticationException catch (e) {
-      _setError(e.message);
     } catch (e) {
-      _setError('Unexpected error: $e');
+      _error = e.toString();
+      _user = null;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  /// Register a new user
-  Future<void> register({
-    required String email,
-    required String password,
-    required String name,
-  }) async {
-    try {
-      _setLoading(true);
-      _clearError();
-
-      final registerUseCase =
-          ServiceLocator.instance.get<RegisterUseCase>();
-      _currentUser = await registerUseCase(
-        email: email,
-        password: password,
-        name: name,
-      );
-      _isAuthenticated = true;
-    } on AuthenticationException catch (e) {
-      _setError(e.message);
-    } catch (e) {
-      _setError('Unexpected error: $e');
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Login user
   Future<void> login({required String email, required String password}) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
     try {
-      _setLoading(true);
-      _clearError();
-
-      final loginUseCase = ServiceLocator.instance.get<LoginUseCase>();
-      _currentUser = await loginUseCase(email: email, password: password);
-      _isAuthenticated = true;
-    } on AuthenticationException catch (e) {
-      _setError(e.message);
+      _user = await _loginUseCase(email: email, password: password);
     } catch (e) {
-      _setError('Unexpected error: $e');
+      _error = e.toString();
+      rethrow;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  /// Logout user
+  Future<void> register({required String email, required String password, required String name}) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      _user = await _registerUseCase(email: email, password: password, name: name);
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> logout() async {
+    _isLoading = true;
+    notifyListeners();
     try {
-      _setLoading(true);
-      _clearError();
-
-      final logoutUseCase = ServiceLocator.instance.get<LogoutUseCase>();
-      await logoutUseCase();
-      _currentUser = null;
-      _isAuthenticated = false;
-    } on AuthenticationException catch (e) {
-      _setError(e.message);
+      await _logoutUseCase();
+      _user = null;
     } catch (e) {
-      _setError('Unexpected error: $e');
+      _error = e.toString();
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners();
     }
-  }
-
-  // Private helpers
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-
-  void _setError(String message) {
-    _errorMessage = message;
-    notifyListeners();
-  }
-
-  void _clearError() {
-    _errorMessage = null;
   }
 }

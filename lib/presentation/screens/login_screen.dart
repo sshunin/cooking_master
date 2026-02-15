@@ -42,13 +42,27 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Consumer<AuthProvider>(
-          builder: (context, authProvider, _) => SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/CM_Load_Image.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Card(
+                color: Colors.white.withOpacity(0.9),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Consumer<AuthProvider>(
+                    builder: (context, authProvider, _) => Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                Image.asset('assets/images/CM_Logo.png', height: 120),
+                const SizedBox(height: 24),
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -117,6 +131,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -25,7 +25,7 @@ abstract class Storage {
   Future<int> insert(String table, Map<String, dynamic> values);
 
   /// Query a table
-  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy});
+  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy, String? where, List<Object?>? whereArgs});
 
   /// Update records in a table
   Future<int> update(String table, Map<String, dynamic> values, {String? where, List<Object?>? whereArgs});
@@ -73,7 +73,7 @@ class LocalStorageImpl implements Storage {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy}) {
+  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy, String? where, List<Object?>? whereArgs}) {
     // Not suitable for this storage type
     throw UnimplementedError('Table operations not supported by LocalStorageImpl');
   }
@@ -132,7 +132,7 @@ class CloudStorageImpl implements Storage {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy}) {
+  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy, String? where, List<Object?>? whereArgs}) {
     // TODO: Implement cloud storage
     throw UnimplementedError('Cloud storage not yet implemented');
   }
@@ -191,7 +191,7 @@ class SharedPreferencesStorageImpl implements Storage {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy}) {
+  Future<List<Map<String, dynamic>>> query(String table, {int? limit, int? offset, String? orderBy, String? where, List<Object?>? whereArgs}) {
     // Not suitable for this storage type
     throw UnimplementedError('Table operations not supported by SharedPreferencesStorageImpl');
   }
