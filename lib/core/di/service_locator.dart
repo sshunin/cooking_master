@@ -1,5 +1,8 @@
 import 'package:cooking_master/core/storage/sqlite_storage.dart';
 import 'package:cooking_master/core/storage/storage.dart';
+import 'package:cooking_master/core/ai/ai_client.dart';
+import 'package:cooking_master/core/ai/openai_client.dart';
+import 'package:cooking_master/core/ai/github_copilot_client.dart';
 import 'package:cooking_master/data/datasources/auth_local_datasource.dart';
 import 'package:cooking_master/data/datasources/ingredient_local_datasource.dart';
 import 'package:cooking_master/data/repositories/auth_repository_impl.dart';
@@ -45,6 +48,14 @@ class ServiceLocator {
 
     // Register storage
     _register<Storage>(_storage);
+
+    // Register AI client backend according to saved preference
+    final backend = (await _storage.getString('ai_backend')) ?? 'openai';
+    if (backend == 'copilot') {
+      _register<AIClient>(GitHubCopilotClient(_storage));
+    } else {
+      _register<AIClient>(OpenAIClient.create(_storage));
+    }
 
     // Register data sources
     _register<AuthLocalDataSource>(
@@ -103,6 +114,12 @@ class ServiceLocator {
 
   /// Register a singleton instance
   void _register<T>(T instance) {
+    _singletons[T] = instance;
+  }
+
+  /// Publicly replace or register a singleton instance for a type.
+  /// Useful for runtime reconfiguration (e.g., switching AI backend).
+  void registerInstance<T>(T instance) {
     _singletons[T] = instance;
   }
 

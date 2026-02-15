@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:cooking_master/core/ai/openai_client.dart';
+import 'package:cooking_master/core/ai/ai_client.dart';
 
 class AddIngredientScreen extends StatefulWidget {
   const AddIngredientScreen({super.key});
@@ -36,8 +36,11 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
   Future<void> _askAIForCalories() async {
     final loc = AppLocalizations.of(context);
 
+    debugPrint('[AI] _askAIForCalories invoked');
+
     // Ensure ingredient name exists
     final name = _nameController.text.trim();
+    debugPrint('[AI] Ingredient name: "$name"');
     if (name.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -47,10 +50,40 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
       return;
     }
 
-    // Check for API key stored in storage; OpenAIClient will throw if missing.
-    // Prompt user to enter API key if absent
+    // If no API key present, prompt user before starting the request
+    final ai = ServiceLocator.instance.get<AIClient>();
+    if (!await ai.hasApiKey()) {
+      debugPrint('[AI] No API key present; will prompt user to enter one');
+      final entered = await showDialog<String?>(
+        context: context,
+        builder: (ctx) {
+          final keyCtrl = TextEditingController();
+          return AlertDialog(
+            title: Text(loc.translate('enter_api_key')),
+            content: TextField(controller: keyCtrl, decoration: InputDecoration(hintText: 'sk-...')),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(null), child: Text(loc.translate('cancel'))),
+              TextButton(onPressed: () => Navigator.of(ctx).pop(keyCtrl.text.trim()), child: Text(loc.translate('save'))),
+            ],
+          );
+        },
+      );
+
+      if (entered == null || entered.isEmpty) {
+        debugPrint('[AI] API key entry cancelled or empty by user');
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('cancel'))));
+        return;
+      }
+
+      debugPrint('[AI] User provided API key (value not logged)');
+      await ai.setApiKey(entered);
+    }
+
+    // Prompt is ready; perform request
     try {
+      debugPrint('[AI] Showing progress dialog and calling OpenAI.suggestCalories');
       // show waiting
+      var progressShown = true;
       showDialog<void>(
         context: context,
         barrierDismissible: false,
@@ -63,14 +96,20 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
             ],
           ),
         ),
-      );
+      ).then((_) {
+        progressShown = false;
+      });
 
-      final client = OpenAIClient.instance();
+      final client = ServiceLocator.instance.get<AIClient>();
+      debugPrint('[AI] Calling AI client suggestCalories');
       final suggestion = await client.suggestCalories(name);
 
-      if (mounted) Navigator.of(context).pop();
+      if (progressShown && mounted) Navigator.of(context).pop();
+
+      debugPrint('[AI] suggestCalories returned: $suggestion');
 
       if (suggestion == null) {
+        debugPrint('[AI] suggestion is null — showing error snackbar');
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('error'))));
         return;
       }
@@ -87,12 +126,22 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
         ),
       );
 
+      debugPrint('[AI] User accept dialog result: $accept');
+
       if (accept == true) {
+        debugPrint('[AI] User accepted suggestion — filling calories field');
         _caloriesController.text = suggestion.toString();
       }
     } catch (e) {
+      debugPrint('[AI] Exception in _askAIForCalories: $e');
+      // Ensure progress dialog closed before prompting
+      try {
+        if (mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
+      } catch (_) {}
+
       // If missing API key, prompt user to enter it
       if (e.toString().contains('NO_API_KEY')) {
+        debugPrint('[AI] Caught NO_API_KEY during suggest — prompting user');
         if (!mounted) return;
         final entered = await showDialog<String?>(
           context: context,
@@ -109,14 +158,19 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
           },
         );
 
-        if (entered != null && entered.isNotEmpty) {
-          await OpenAIClient.instance().setApiKey(entered);
-          // Retry once
-          await _askAIForCalories();
+        // If user cancelled or entered empty key, do not start request
+        if (entered == null || entered.isEmpty) {
+          debugPrint('[AI] User cancelled API key entry after NO_API_KEY');
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('cancel'))));
+          return;
         }
+
+        debugPrint('[AI] User provided API key after NO_API_KEY (value not logged)');
+        await ServiceLocator.instance.get<AIClient>().setApiKey(entered);
+        // Retry once
+        await _askAIForCalories();
       } else {
         if (mounted) {
-          if (Navigator.of(context).canPop()) Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('error')), backgroundColor: Colors.red));
         }
       }
@@ -160,29 +214,52 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? loc.translate('edit_ingredient') : loc.translate('add_ingredient')),
         actions: [
-          TextButton(
-            child: Text(
-              _isEditing ? loc.translate('update') : loc.translate('save'),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                final calories = int.tryParse(_caloriesController.text);
-                // The validator should prevent this from being null, but this is a safe fallback.
-                if (calories == null) return;
-
-                final ingredient = Ingredient(
-                    id: _editingId, name: _nameController.text, calories: calories, photoPath: _imagePath);
-                
-                if (_isEditing) {
-                  await ServiceLocator.instance.get<UpdateIngredientUseCase>().call(ingredient);
-                } else {
-                  await ServiceLocator.instance.get<SaveIngredientUseCase>().call(ingredient);
-                }
-                if (mounted) Navigator.of(context).pop();
-              }
-            },
-          ),
+              if (_isEditing) ...[
+                IconButton(
+                  tooltip: AppLocalizations.of(context).translate('ask_ai'),
+                  icon: const Icon(Icons.smart_toy),
+                  onPressed: _askAIForCalories,
+                ),
+                TextButton(
+                  child: Text(
+                    loc.translate('update'),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final calories = int.tryParse(_caloriesController.text);
+                      // The validator should prevent this from being null, but this is a safe fallback.
+                      if (calories == null) return;
+                      
+                      final ingredient = Ingredient(
+                          id: _editingId, name: _nameController.text, calories: calories, photoPath: _imagePath);
+                      
+                      await ServiceLocator.instance.get<UpdateIngredientUseCase>().call(ingredient);
+                      if (mounted) Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              ] else ...[
+                TextButton(
+                  child: Text(
+                    loc.translate('save'),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final calories = int.tryParse(_caloriesController.text);
+                      // The validator should prevent this from being null, but this is a safe fallback.
+                      if (calories == null) return;
+                      
+                      final ingredient = Ingredient(
+                          id: _editingId, name: _nameController.text, calories: calories, photoPath: _imagePath);
+                      
+                      await ServiceLocator.instance.get<SaveIngredientUseCase>().call(ingredient);
+                      if (mounted) Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              ],
         ],
       ),
       body: Padding(

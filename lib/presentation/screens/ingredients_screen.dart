@@ -19,6 +19,8 @@ class IngredientsScreen extends StatefulWidget {
 class _IngredientsScreenState extends State<IngredientsScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<Ingredient> _ingredients = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isLoading = false;
   bool _hasMore = true;
   int _offset = 0;
@@ -29,12 +31,24 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     super.initState();
     _loadIngredients();
     _scrollController.addListener(_onScroll);
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim();
+      });
+    });
   }
 
   @override
   void dispose() {
+    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  List<Ingredient> get _displayedIngredients {
+    if (_searchQuery.isEmpty) return _ingredients;
+    final q = _searchQuery.toLowerCase();
+    return _ingredients.where((i) => i.name.toLowerCase().contains(q)).toList();
   }
 
   void _onScroll() {
@@ -101,25 +115,54 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
             ),
           ],
         ),
-        body: _ingredients.isEmpty && !_isLoading
-            ? Center(child: Text(loc.translate('ingredients')))
-            : ListView.builder(
-                controller: _scrollController,
-                itemCount: _ingredients.length + (_hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == _ingredients.length) {
-                    return const Center(child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: CircularProgressIndicator(),
-                    ));
-                  }
-                  final ingredient = _ingredients[index];
-                  return ListTile(
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _ingredients.clear();
+                              _offset = 0;
+                              _hasMore = true;
+                            });
+                            _loadIngredients();
+                          },
+                        )
+                      : null,
+                  hintText: loc.translate('search_ingredients') ,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+            Expanded(
+              child: _ingredients.isEmpty && !_isLoading
+                  ? Center(child: Text(loc.translate('ingredients')))
+                  : ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _displayedIngredients.length + ((_searchQuery.isEmpty && _hasMore) ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (_searchQuery.isEmpty && index == _displayedIngredients.length) {
+                          return const Center(child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: CircularProgressIndicator(),
+                          ));
+                        }
+                        if (index >= _displayedIngredients.length) return const SizedBox.shrink();
+                        final ingredient = _displayedIngredients[index];
+                        return ListTile(
                     leading: ingredient.photoPath != null
                         ? CircleAvatar(backgroundImage: FileImage(File(ingredient.photoPath!)))
                         : const CircleAvatar(child: Icon(Icons.fastfood)),
                     title: Text(ingredient.name),
-                    subtitle: Text('${ingredient.calories} kcal'),
+                    subtitle: Text(loc.translate('calories_value', {'value': ingredient.calories.toString()})),
                     onTap: () async {
                       await Navigator.of(context).pushNamed('/add_ingredient', arguments: ingredient);
                       // Refresh list after editing
@@ -191,6 +234,9 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                   );
                 },
               ),
+            ),
+          ],
+        ),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
             await Navigator.of(context).pushNamed('/add_ingredient');
