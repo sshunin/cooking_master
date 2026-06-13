@@ -93,24 +93,34 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         onPressed: () => _showAddItemDialog(context),
         child: const Icon(Icons.add),
       ),
-      body: Consumer<ShoppingListProvider>(
-        builder: (context, provider, child) {
-          return ListView.builder(
-            itemCount: provider.items.length,
-            itemBuilder: (context, index) {
-              final item = provider.items[index];
-              return CheckboxListTile(
-                title: Text(
-                  item.name,
-                  style: TextStyle(decoration: item.isBought ? TextDecoration.lineThrough : null, color: item.isBought ? Colors.grey : null),
-                ),
-                value: item.isBought,
-                onChanged: (_) => provider.toggleItem(item),
-                secondary: IconButton(icon: const Icon(Icons.delete, color: Colors.grey), onPressed: () => provider.deleteItem(item.id!)),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/CM_ingredients_list_background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Consumer<ShoppingListProvider>(
+            builder: (context, provider, child) {
+              return ListView.builder(
+                itemCount: provider.items.length,
+                itemBuilder: (context, index) {
+                  final item = provider.items[index];
+                  return CheckboxListTile(
+                    title: Text(
+                      item.name,
+                      style: TextStyle(decoration: item.isBought ? TextDecoration.lineThrough : null, color: item.isBought ? Colors.grey : null),
+                    ),
+                    value: item.isBought,
+                    onChanged: (_) => provider.toggleItem(item),
+                    secondary: IconButton(icon: const Icon(Icons.delete, color: Colors.grey), onPressed: () => provider.deleteItem(item.id!)),
+                  );
+                },
               );
             },
-          );
-        },
+          ),
+        ],
       ),
     );
   }

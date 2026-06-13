@@ -207,142 +207,143 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
     }
   }
 
+  Future<void> _saveIngredient() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final calories = int.tryParse(_caloriesController.text) ?? 0;
+
+    final ingredient = Ingredient(
+        id: _editingId, name: _nameController.text, calories: calories, photoPath: _imagePath);
+
+    if (_isEditing) {
+      await ServiceLocator.instance.get<UpdateIngredientUseCase>().call(ingredient);
+    } else {
+      await ServiceLocator.instance.get<SaveIngredientUseCase>().call(ingredient);
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _handleBackPress() async {
+    if (_formKey.currentState!.validate()) {
+      await _saveIngredient();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _handleBackPress,
+        ),
         title: Text(_isEditing ? loc.translate('edit_ingredient') : loc.translate('add_ingredient')),
         actions: [
-              if (_isEditing) ...[
-                TextButton(
-                  child: Text(
-                    loc.translate('update'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      final calories = int.tryParse(_caloriesController.text);
-                      // The validator should prevent this from being null, but this is a safe fallback.
-                      if (calories == null) return;
-                      
-                      final ingredient = Ingredient(
-                          id: _editingId, name: _nameController.text, calories: calories, photoPath: _imagePath);
-                      
-                      await ServiceLocator.instance.get<UpdateIngredientUseCase>().call(ingredient);
-                      if (mounted) Navigator.of(context).pop();
-                    }
-                  },
-                ),
-              ] else ...[
-                TextButton(
-                  child: Text(
-                    loc.translate('save'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      final calories = int.tryParse(_caloriesController.text);
-                      // The validator should prevent this from being null, but this is a safe fallback.
-                      if (calories == null) return;
-                      
-                      final ingredient = Ingredient(
-                          id: _editingId, name: _nameController.text, calories: calories, photoPath: _imagePath);
-                      
-                      await ServiceLocator.instance.get<SaveIngredientUseCase>().call(ingredient);
-                      if (mounted) Navigator.of(context).pop();
-                    }
-                  },
-                ),
-              ],
+          TextButton(
+            child: Text(
+              _isEditing ? loc.translate('update') : loc.translate('save'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            onPressed: _saveIngredient,
+          ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: loc.translate('ingredient_name'),
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return loc.translate('please_fill_all');
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _caloriesController,
-                decoration: InputDecoration(
-                  labelText: loc.translate('calories'),
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                    borderSide: BorderSide.none,
-                  ),
-                  suffixIcon: TextButton.icon(
-                    onPressed: _askAIForCalories,
-                    icon: const Icon(Icons.smart_toy, size: 18),
-                    label: Text(loc.translate('ask_ai')),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      minimumSize: const Size(0, 36),
-                    ),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return loc.translate('please_fill_all');
-                  }
-                  if (int.tryParse(value) == null) {
-                    return loc.translate('invalid_number');
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              Row(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/CM_ingredients_list_background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('ingredient_name'),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: _imagePath != null
-                        ? Image.file(File(_imagePath!), fit: BoxFit.cover)
-                        : const Icon(Icons.image, size: 40, color: Colors.grey),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return loc.translate('please_fill_all');
+                      }
+                      return null;
+                    },
                   ),
-                  const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    onPressed: _pickImage,
-                    icon: const Icon(Icons.upload),
-                    label: Text(loc.translate('upload_photo')),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _caloriesController,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('calories'),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: TextButton.icon(
+                        onPressed: _askAIForCalories,
+                        icon: const Icon(Icons.smart_toy, size: 18),
+                        label: Text(loc.translate('ask_ai')),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          minimumSize: const Size(0, 36),
+                        ),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty && int.tryParse(value) == null) {
+                        return loc.translate('invalid_number');
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: _imagePath != null
+                            ? Image.file(File(_imagePath!), fit: BoxFit.cover)
+                            : const Icon(Icons.image, size: 40, color: Colors.grey),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton.icon(
+                        onPressed: _pickImage,
+                        icon: const Icon(Icons.upload),
+                        label: Text(loc.translate('upload_photo')),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -78,6 +78,19 @@ class _ReceiptsScreenContentState extends State<_ReceiptsScreenContent> {
           title: Text(loc.translate('receipts')),
           actions: [
             IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                final result = await Navigator.of(context).pushNamed('/add_recipe');
+                if (result == true && context.mounted) {
+                  final user = context.read<AuthProvider>().user;
+                  if (user != null) {
+                    context.read<RecipeProvider>().loadRecipes(user.id);
+                  }
+                }
+              },
+              tooltip: loc.translate('add_recipe') != 'add_recipe' ? loc.translate('add_recipe') : 'Add Recipe',
+            ),
+            IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () => Navigator.of(context).pushNamed('/preferences'),
             ),
@@ -87,26 +100,6 @@ class _ReceiptsScreenContentState extends State<_ReceiptsScreenContent> {
               tooltip: loc.translate('logout'),
             ),
           ],
-        ),
-        bottomNavigationBar: BottomAppBar(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              FloatingActionButton(
-                onPressed: () async {
-                  final result = await Navigator.of(context).pushNamed('/add_recipe');
-                  if (result == true && context.mounted) {
-                    final user = context.read<AuthProvider>().user;
-                    if (user != null) {
-                      context.read<RecipeProvider>().loadRecipes(user.id);
-                    }
-                  }
-                },
-                tooltip: loc.translate('add_recipe') != 'add_recipe' ? loc.translate('add_recipe') : 'Add Recipe',
-                child: const Icon(Icons.add),
-              ),
-            ],
-          ),
         ),
         body: Stack(
           children: [

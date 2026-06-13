@@ -93,6 +93,10 @@ class AppLocalizations {
       'add_item': 'Add Item',
       'clear_list': 'Clear List',
       'confirm_clear_list': 'Are you sure you want to clear the shopping list?',
+      'meal_planner': 'Meal Planner',
+      'add_to_meal_plan': 'Add to Meal Plan',
+      'select_date': 'Select Date',
+      'added_to_meal_plan_on': 'Added to meal plan for {date}',
     },
     'ru': {
       'login': 'Вход',
@@ -178,6 +182,10 @@ class AppLocalizations {
       'add_item': 'Добавить',
       'clear_list': 'Очистить',
       'confirm_clear_list': 'Вы уверены, что хотите очистить список?',
+      'meal_planner': 'Планировщик еды',
+      'add_to_meal_plan': 'Добавить в план',
+      'select_date': 'Выберите дату',
+      'added_to_meal_plan_on': 'Добавлено в план на {date}',
     },
     'de': {
       'login': 'Anmelden',
@@ -263,6 +271,10 @@ class AppLocalizations {
       'add_item': 'Hinzufügen',
       'clear_list': 'Liste leeren',
       'confirm_clear_list': 'Möchten Sie die Einkaufsliste wirklich leeren?',
+      'meal_planner': 'Essensplaner',
+      'add_to_meal_plan': 'Zum Essensplan hinzufügen',
+      'select_date': 'Datum auswählen',
+      'added_to_meal_plan_on': 'Zum Essensplan für {date} hinzugefügt',
     },
   };
 

@@ -98,6 +98,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     }
   }
 
+  Future<void> _handleBackPress() async {
+    if (_formKey.currentState!.validate()) {
+      await _saveRecipe();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -106,7 +114,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         title: Text(widget.recipeToEdit != null ? loc.translate('edit_recipe') : loc.translate('add_recipe_title')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _handleBackPress,
         ),
         actions: [
           IconButton(
@@ -118,9 +126,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             FloatingActionButton.extended(
+              heroTag: 'select_ingredients',
               onPressed: () async {
                 final result = await Navigator.of(context).push(
                   MaterialPageRoute(
@@ -133,142 +142,164 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   setState(() => _selectedIngredients = result);
                 }
               },
-              label: Text(loc.translate('select_ingredients') != 'select_ingredients' ? loc.translate('select_ingredients') : 'Select Ingredients'),
-              icon: const Icon(Icons.shopping_basket),
+              label: Text(
+                (loc.translate('select_ingredients') != 'select_ingredients' ? loc.translate('select_ingredients') : 'Select Ingredients').replaceAll(' ', '\n'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12),
+              ),
+              icon: const Icon(Icons.shopping_basket, size: 20),
               tooltip: loc.translate('select_ingredients') != 'select_ingredients' ? loc.translate('select_ingredients') : 'Select Ingredients',
+              extendedPadding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            FloatingActionButton.extended(
+              heroTag: 'add_step',
+              onPressed: () async {
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AddStepScreen(),
+                  ),
+                );
+                if (result != null && result is RecipeStep) {
+                  setState(() => _steps.add(result));
+                }
+              },
+              label: Text(
+                (loc.translate('add_step') != 'add_step' ? loc.translate('add_step') : 'Add Step').replaceAll(' ', '\n'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12),
+              ),
+              icon: const Icon(Icons.add, size: 20),
+              tooltip: loc.translate('add_step') != 'add_step' ? loc.translate('add_step') : 'Add Step',
+              extendedPadding: const EdgeInsets.symmetric(horizontal: 12),
             ),
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    image: _photoPath != null
-                        ? DecorationImage(
-                            image: FileImage(File(_photoPath!)),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: _photoPath == null
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
-                            const SizedBox(height: 8),
-                            Text(loc.translate('pick_photo'), style: const TextStyle(color: Colors.grey)),
-                          ],
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: loc.translate('recipe_name'),
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) => value?.isEmpty == true ? loc.translate('please_fill_all') : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: loc.translate('recipe_description'),
-                  border: const OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 5,
-              ),
-              if (_selectedIngredients.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text('${loc.translate('ingredients')}: ${_selectedIngredients.length}'),
-              ],
-              const SizedBox(height: 16),
-              Text(loc.translate('steps'), style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              ReorderableListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                buildDefaultDragHandles: false,
-                itemCount: _steps.length,
-                onReorder: (int oldIndex, int newIndex) {
-                  setState(() {
-                    if (oldIndex < newIndex) {
-                      newIndex -= 1;
-                    }
-                    final RecipeStep item = _steps.removeAt(oldIndex);
-                    _steps.insert(newIndex, item);
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final step = _steps[index];
-                  return Card(
-                    key: ObjectKey(step),
-                    child: ListTile(
-                      leading: CircleAvatar(child: Text('${index + 1}')),
-                      title: Text(step.name),
-                      subtitle: Text(step.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () => setState(() => _steps.removeAt(index)),
-                          ),
-                          ReorderableDragStartListener(
-                            index: index,
-                            child: const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Icon(Icons.drag_handle),
-                            ),
-                          ),
-                        ],
-                      ),
-                      onTap: () async {
-                        final result = await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => AddStepScreen(stepToEdit: step),
-                          ),
-                        );
-                        if (result != null && result is RecipeStep) {
-                          setState(() => _steps[index] = result);
-                        }
-                      },
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AddStepScreen(),
-                    ),
-                  );
-                  if (result != null && result is RecipeStep) {
-                    setState(() => _steps.add(result));
-                  }
-                },
-                icon: const Icon(Icons.add),
-                label: Text(loc.translate('add_step')),
-              ),
-            ],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/CM_ingredients_list_background.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                        image: _photoPath != null
+                            ? DecorationImage(
+                                image: FileImage(File(_photoPath!)),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _photoPath == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                                const SizedBox(height: 8),
+                                Text(loc.translate('pick_photo'), style: const TextStyle(color: Colors.grey)),
+                              ],
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('recipe_name'),
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => value?.isEmpty == true ? loc.translate('please_fill_all') : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('recipe_description'),
+                      border: const OutlineInputBorder(),
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 5,
+                  ),
+                  if (_selectedIngredients.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text('${loc.translate('ingredients')}: ${_selectedIngredients.length}'),
+                  ],
+                  const SizedBox(height: 16),
+                  Text(loc.translate('steps'), style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    buildDefaultDragHandles: false,
+                    itemCount: _steps.length,
+                    onReorder: (int oldIndex, int newIndex) {
+                      setState(() {
+                        if (oldIndex < newIndex) {
+                          newIndex -= 1;
+                        }
+                        final RecipeStep item = _steps.removeAt(oldIndex);
+                        _steps.insert(newIndex, item);
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final step = _steps[index];
+                      return Card(
+                        key: ObjectKey(step),
+                        child: ListTile(
+                          leading: CircleAvatar(child: Text('${index + 1}')),
+                          title: Text(step.name),
+                          subtitle: Text(step.description, maxLines: 2, overflow: TextOverflow.ellipsis),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => setState(() => _steps.removeAt(index)),
+                              ),
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Icon(Icons.drag_handle),
+                                ),
+                              ),
+                            ],
+                          ),
+                          onTap: () async {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => AddStepScreen(stepToEdit: step),
+                              ),
+                            );
+                            if (result != null && result is RecipeStep) {
+                              setState(() => _steps[index] = result);
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

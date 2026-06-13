@@ -59,6 +59,10 @@ class _SelectIngredientsScreenState extends State<SelectIngredientsScreen> {
     final loc = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(_selectedIngredients),
+        ),
         title: Text(loc.translate('select_ingredients') != 'select_ingredients' ? loc.translate('select_ingredients') : 'Select Ingredients'),
         actions: [
           IconButton(
@@ -69,27 +73,37 @@ class _SelectIngredientsScreenState extends State<SelectIngredientsScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Row(
-              children: [
-                Expanded(
-                  child: _buildList(
-                    title: 'Available',
-                    items: _availableIngredients,
-                    isAvailableList: true,
-                    searchController: _availableSearchController,
-                  ),
+          : Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/CM_ingredients_list_background.png',
+                  fit: BoxFit.cover,
                 ),
-                const VerticalDivider(width: 1),
-                Expanded(
-                  child: _buildList(
-                    title: 'Selected',
-                    items: _selectedIngredients,
-                    isAvailableList: false,
-                    searchController: _selectedSearchController,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildList(
+                      title: 'Available',
+                      items: _availableIngredients,
+                      isAvailableList: true,
+                      searchController: _availableSearchController,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    child: _buildList(
+                      title: 'Selected',
+                      items: _selectedIngredients,
+                      isAvailableList: false,
+                      searchController: _selectedSearchController,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
     );
   }
 

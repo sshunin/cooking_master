@@ -60,6 +60,14 @@ class _AddStepScreenState extends State<AddStepScreen> {
     Navigator.of(context).pop(step);
   }
 
+  void _handleBackPress() {
+    if (_formKey.currentState!.validate()) {
+      _saveStep();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -68,7 +76,7 @@ class _AddStepScreenState extends State<AddStepScreen> {
         title: Text(widget.stepToEdit != null ? loc.translate('edit_step') : loc.translate('add_step')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _handleBackPress,
         ),
         actions: [
           IconButton(
@@ -78,62 +86,72 @@ class _AddStepScreenState extends State<AddStepScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    image: _photoPath != null
-                        ? DecorationImage(
-                            image: FileImage(File(_photoPath!)),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: _photoPath == null
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
-                            const SizedBox(height: 8),
-                            Text(loc.translate('pick_photo'), style: const TextStyle(color: Colors.grey)),
-                          ],
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: loc.translate('step_name'),
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) => value?.isEmpty == true ? loc.translate('please_fill_all') : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: loc.translate('step_description'),
-                  border: const OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 5,
-                validator: (value) => value?.isEmpty == true ? loc.translate('please_fill_all') : null,
-              ),
-            ],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/CM_ingredients_list_background.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                        image: _photoPath != null
+                            ? DecorationImage(
+                                image: FileImage(File(_photoPath!)),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _photoPath == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                                const SizedBox(height: 8),
+                                Text(loc.translate('pick_photo'), style: const TextStyle(color: Colors.grey)),
+                              ],
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('step_name'),
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => value?.isEmpty == true ? loc.translate('please_fill_all') : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('step_description'),
+                      border: const OutlineInputBorder(),
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 5,
+                    validator: (value) => value?.isEmpty == true ? loc.translate('please_fill_all') : null,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

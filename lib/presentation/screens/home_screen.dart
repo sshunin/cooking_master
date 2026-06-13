@@ -27,6 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
           title: Text(loc.translate('cooking_master')),
           actions: [
             IconButton(
+              icon: const Icon(Icons.calendar_month),
+              onPressed: () => Navigator.of(context).pushNamed('/meal_planner'),
+            ),
+            IconButton(
               icon: const Icon(Icons.shopping_cart),
               onPressed: () => Navigator.of(context).pushNamed('/shopping_list'),
             ),

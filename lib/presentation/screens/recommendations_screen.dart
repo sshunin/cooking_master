@@ -31,8 +31,18 @@ class RecommendationsScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: Center(
-          child: Text(loc.translate('recommendations')),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/CM_ingredients_list_background.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            Center(
+              child: Text(loc.translate('recommendations')),
+            ),
+          ],
         ),
       ),
     );

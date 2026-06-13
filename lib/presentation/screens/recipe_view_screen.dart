@@ -102,110 +102,120 @@ class RecipeViewScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (recipe.photoPath != null)
-              SizedBox(
-                height: 250,
-                child: Image.file(
-                  File(recipe.photoPath!),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                    );
-                  },
-                ),
-              )
-            else
-              SizedBox(
-                height: 250,
-                child: Image.asset(
-                  'assets/images/CM_Default_Receipe.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    recipe.name,
-                    style: theme.textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  if (recipe.description.isNotEmpty) ...[
-                    Text(
-                      recipe.description,
-                      style: theme.textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  Text(
-                    loc.translate('ingredients'),
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  if (recipe.ingredients.isEmpty)
-                    Text(loc.translate('no_ingredients_added') == 'no_ingredients_added'
-                        ? 'No ingredients added'
-                        : loc.translate('no_ingredients_added'))
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: recipe.ingredients.length,
-                      itemBuilder: (context, index) {
-                        final ingredient = recipe.ingredients[index];
-                        return ListTile(
-                          leading: const Icon(Icons.circle, size: 8),
-                          title: Text(ingredient.name),
-                          trailing: Text('${ingredient.calories} kcal'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        );
-                      },
-                    ),
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  Text(
-                    loc.translate('steps'),
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  if (recipe.steps.isEmpty)
-                    Text(loc.translate('no_steps_added') == 'no_steps_added'
-                        ? 'No steps added'
-                        : loc.translate('no_steps_added'))
-                  else
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: recipe.steps.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 16),
-                      itemBuilder: (context, index) {
-                        final step = recipe.steps[index];
-                        return ListTile(
-                          leading: CircleAvatar(child: Text('${index + 1}')),
-                          title: Text(step.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(step.description),
-                          contentPadding: EdgeInsets.zero,
-                        );
-                      },
-                    ),
-                  const SizedBox(height: 80), // Space for FAB
-                ],
-              ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/CM_ingredients_list_background.png',
+              fit: BoxFit.cover,
             ),
-          ],
-        ),
+          ),
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (recipe.photoPath != null)
+                  SizedBox(
+                    height: 250,
+                    child: Image.file(
+                      File(recipe.photoPath!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                        );
+                      },
+                    ),
+                  )
+                else
+                  SizedBox(
+                    height: 250,
+                    child: Image.asset(
+                      'assets/images/CM_Default_Receipe.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        recipe.name,
+                        style: theme.textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      if (recipe.description.isNotEmpty) ...[
+                        Text(
+                          recipe.description,
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      const Divider(),
+                      const SizedBox(height: 16),
+                      Text(
+                        loc.translate('ingredients'),
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      if (recipe.ingredients.isEmpty)
+                        Text(loc.translate('no_ingredients_added') == 'no_ingredients_added'
+                            ? 'No ingredients added'
+                            : loc.translate('no_ingredients_added'))
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: recipe.ingredients.length,
+                          itemBuilder: (context, index) {
+                            final ingredient = recipe.ingredients[index];
+                            return ListTile(
+                              leading: const Icon(Icons.circle, size: 8),
+                              title: Text(ingredient.name),
+                              trailing: Text('${ingredient.calories} kcal'),
+                              contentPadding: EdgeInsets.zero,
+                              visualDensity: VisualDensity.compact,
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 24),
+                      const Divider(),
+                      const SizedBox(height: 16),
+                      Text(
+                        loc.translate('steps'),
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      if (recipe.steps.isEmpty)
+                        Text(loc.translate('no_steps_added') == 'no_steps_added'
+                            ? 'No steps added'
+                            : loc.translate('no_steps_added'))
+                      else
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: recipe.steps.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final step = recipe.steps[index];
+                            return ListTile(
+                              leading: CircleAvatar(child: Text('${index + 1}')),
+                              title: Text(step.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text(step.description),
+                              contentPadding: EdgeInsets.zero,
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 80), // Space for FAB
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

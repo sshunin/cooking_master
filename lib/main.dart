@@ -1,9 +1,11 @@
 import 'package:cooking_master/core/di/service_locator.dart';
 import 'package:cooking_master/core/i18n/app_localizations.dart';
 import 'package:cooking_master/domain/usecases/auth_usecases.dart';
+import 'package:cooking_master/domain/usecases/meal_plan_usecases.dart';
 import 'package:cooking_master/domain/usecases/shopping_list_usecases.dart';
 import 'package:cooking_master/presentation/providers/auth_provider.dart';
 import 'package:cooking_master/presentation/providers/locale_provider.dart';
+import 'package:cooking_master/presentation/providers/meal_planner_provider.dart';
 import 'package:cooking_master/presentation/providers/shopping_list_provider.dart';
 import 'package:cooking_master/presentation/screens/add_ingredient_screen.dart';
 import 'package:cooking_master/presentation/screens/add_recipe_screen.dart';
@@ -11,6 +13,7 @@ import 'package:cooking_master/presentation/screens/home_screen.dart';
 import 'package:cooking_master/presentation/screens/ingredients_screen.dart';
 import 'package:cooking_master/presentation/screens/login_screen.dart';
 import 'package:cooking_master/presentation/screens/preferences_screen.dart';
+import 'package:cooking_master/presentation/screens/meal_planner_screen.dart';
 import 'package:cooking_master/presentation/screens/receipts_screen.dart';
 import 'package:cooking_master/presentation/screens/recommendations_screen.dart';
 import 'package:cooking_master/presentation/screens/register_screen.dart';
@@ -54,6 +57,14 @@ class CookingMasterApp extends StatelessWidget {
             ServiceLocator.instance.get<ClearShoppingListUseCase>(),
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => MealPlannerProvider(
+            ServiceLocator.instance.get<GetMealPlanUseCase>(),
+            ServiceLocator.instance.get<GetMealPlansForRangeUseCase>(),
+            ServiceLocator.instance.get<AddRecipeToMealPlanUseCase>(),
+            ServiceLocator.instance.get<RemoveRecipeFromMealPlanUseCase>(),
+          ),
+        ),
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, _) => MaterialApp(
@@ -91,6 +102,7 @@ class CookingMasterApp extends StatelessWidget {
             '/recommendations': (_) => const RecommendationsScreen(),
             '/preferences': (_) => const PreferencesScreen(),
             '/add_recipe': (_) => const AddRecipeScreen(),
+            '/meal_planner': (_) => const MealPlannerScreen(),
             '/shopping_list': (_) => const ShoppingListScreen(),
           },
         ),

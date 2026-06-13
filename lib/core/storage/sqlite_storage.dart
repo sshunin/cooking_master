@@ -15,7 +15,7 @@ class SqliteStorageImpl implements Storage {
     final path = p.join(documentsDirectory.path, 'cooking_master.db');
     final db = await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT)',
@@ -28,6 +28,9 @@ class SqliteStorageImpl implements Storage {
         );
         await db.execute(
           'CREATE TABLE IF NOT EXISTS shopping_list (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, is_bought INTEGER)',
+        );
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS meal_plans (date TEXT PRIMARY KEY, recipe_ids TEXT)',
         );
       },
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -56,6 +59,11 @@ class SqliteStorageImpl implements Storage {
         if (oldVersion < 6) {
           await db.execute(
             'CREATE TABLE IF NOT EXISTS shopping_list (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, is_bought INTEGER)',
+          );
+        }
+        if (oldVersion < 7) {
+          await db.execute(
+            'CREATE TABLE IF NOT EXISTS meal_plans (date TEXT PRIMARY KEY, recipe_ids TEXT)',
           );
         }
       },

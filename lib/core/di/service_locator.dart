@@ -6,14 +6,17 @@ import 'package:cooking_master/core/ai/github_copilot_client.dart';
 import 'package:cooking_master/data/datasources/auth_local_datasource.dart';
 import 'package:cooking_master/data/datasources/ingredient_local_datasource.dart';
 import 'package:cooking_master/data/datasources/recipe_local_datasource.dart';
+import 'package:cooking_master/data/datasources/meal_plan_local_datasource.dart';
 import 'package:cooking_master/data/datasources/shopping_list_local_datasource.dart';
 import 'package:cooking_master/data/repositories/auth_repository_impl.dart';
 import 'package:cooking_master/data/repositories/ingredient_repository_impl.dart';
 import 'package:cooking_master/data/repositories/recipe_repository_impl.dart';
+import 'package:cooking_master/data/repositories/meal_plan_repository_impl.dart';
 import 'package:cooking_master/data/repositories/shopping_list_repository_impl.dart';
 import 'package:cooking_master/domain/repositories/auth_repository.dart';
 import 'package:cooking_master/domain/repositories/ingredient_repository.dart';
 import 'package:cooking_master/domain/repositories/recipe_repository.dart';
+import 'package:cooking_master/domain/repositories/meal_plan_repository.dart';
 import 'package:cooking_master/domain/repositories/shopping_list_repository.dart';
 import 'package:cooking_master/domain/usecases/auth_usecases.dart';
 import 'package:cooking_master/domain/usecases/get_ingredients_usecase.dart';
@@ -22,6 +25,7 @@ import 'package:cooking_master/domain/usecases/save_ingredient_usecase.dart';
 import 'package:cooking_master/domain/usecases/update_ingredient_usecase.dart';
 import 'package:cooking_master/domain/usecases/delete_recipe_usecase.dart';
 import 'package:cooking_master/domain/usecases/delete_ingredient_usecase.dart';
+import 'package:cooking_master/domain/usecases/meal_plan_usecases.dart';
 import 'package:cooking_master/domain/usecases/shopping_list_usecases.dart';
 
 /// Service Locator for dependency injection
@@ -83,6 +87,10 @@ class ServiceLocator {
       ShoppingListLocalDataSourceImpl(_storage),
     );
 
+    _register<MealPlanLocalDataSource>(
+      MealPlanLocalDataSourceImpl(_storage),
+    );
+
     // Register repositories
     _register<AuthRepository>(
       AuthRepositoryImpl(_get<AuthLocalDataSource>()),
@@ -98,6 +106,11 @@ class ServiceLocator {
 
     _register<ShoppingListRepository>(
       ShoppingListRepositoryImpl(_get<ShoppingListLocalDataSource>()),
+    );
+
+    _register<MealPlanRepository>(
+      MealPlanRepositoryImpl(
+          _get<MealPlanLocalDataSource>(), _get<RecipeRepository>()),
     );
 
     // Register use cases
@@ -162,6 +175,22 @@ class ServiceLocator {
 
     _register<ClearShoppingListUseCase>(
       ClearShoppingListUseCase(_get<ShoppingListRepository>()),
+    );
+
+    _register<GetMealPlanUseCase>(
+      GetMealPlanUseCase(_get<MealPlanRepository>()),
+    );
+
+    _register<GetMealPlansForRangeUseCase>(
+      GetMealPlansForRangeUseCase(_get<MealPlanRepository>()),
+    );
+
+    _register<AddRecipeToMealPlanUseCase>(
+      AddRecipeToMealPlanUseCase(_get<MealPlanRepository>()),
+    );
+
+    _register<RemoveRecipeFromMealPlanUseCase>(
+      RemoveRecipeFromMealPlanUseCase(_get<MealPlanRepository>()),
     );
   }
 

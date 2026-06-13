@@ -165,6 +165,20 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
           title: Text(loc.translate('ingredients')),
           actions: [
             IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                await Navigator.of(context).pushNamed('/add_ingredient');
+                // Refresh list after adding
+                setState(() {
+                  _ingredients.clear();
+                  _offset = 0;
+                  _hasMore = true;
+                });
+                _loadIngredients();
+              },
+              tooltip: loc.translate('add_ingredient'),
+            ),
+            IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () => Navigator.of(context).pushNamed('/preferences'),
             ),
@@ -186,32 +200,44 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
             Column(
               children: [
                 Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _ingredients.clear();
-                              _offset = 0;
-                              _hasMore = true;
-                            });
-                            _loadIngredients();
-                          },
-                        )
-                      : null,
-                  hintText: loc.translate('search_ingredients') ,
-                  border: const OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.8),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() {
+                                        _ingredients.clear();
+                                        _offset = 0;
+                                        _hasMore = true;
+                                      });
+                                      _loadIngredients();
+                                    },
+                                  )
+                                : null,
+                            hintText: loc.translate('search_ingredients'),
+                            border: const OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.sort),
+                        onPressed: _showSortOptions,
+                        tooltip: loc.translate('sort_by'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
             Expanded(
               child: _ingredients.isEmpty && !_isLoading
                   ? Center(child: Text(loc.translate('ingredients')))
@@ -312,32 +338,6 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
         ),
       ],
     ),
-        bottomNavigationBar: BottomAppBar(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              FloatingActionButton(
-                heroTag: 'sort',
-                onPressed: _showSortOptions,
-                child: const Icon(Icons.sort),
-              ),
-              FloatingActionButton(
-                heroTag: 'add',
-                onPressed: () async {
-                  await Navigator.of(context).pushNamed('/add_ingredient');
-                  // Refresh list after adding
-                  setState(() {
-                    _ingredients.clear();
-                    _offset = 0;
-                    _hasMore = true;
-                  });
-                  _loadIngredients();
-                },
-                child: const Icon(Icons.add),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
